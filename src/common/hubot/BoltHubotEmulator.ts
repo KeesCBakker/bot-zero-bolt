@@ -1,11 +1,12 @@
-import path, { resolve } from "path"
 import fs from "fs"
-import { StringIndexed } from "@slack/bolt/dist/types/helpers"
-import { App, SayFn } from "@slack/bolt"
 import Hubot from "hubot"
-import { ProfileService } from "../ProfileService"
+import path from "path"
+import { App, SayFn } from "@slack/bolt"
 import { escapeRegExp } from "hubot-command-mapper/dist/utils/regex"
-import { MiddlewareEmulator, Middleware } from "./MiddlewareEmulator"
+import { HelpEmulator } from "./HelpEmulator"
+import { Middleware, MiddlewareEmulator } from "./MiddlewareEmulator"
+import { ProfileService } from "../ProfileService"
+import { StringIndexed } from "@slack/bolt/dist/types/helpers"
 
 type InternalMessage = Hubot.Message & {
   isDirect: boolean
@@ -28,8 +29,8 @@ export class BoltHubotEmulator {
     regex: RegExp
     callback: (msg: Hubot.Response) => void
   }[] = []
-  private commands: any[]
   private receiveMiddlewareHandler = new MiddlewareEmulator()
+  private helpHandler: HelpEmulator
 
   constructor(
     public readonly name: string,
@@ -38,7 +39,7 @@ export class BoltHubotEmulator {
     private readonly profiles: ProfileService,
     private readonly alias: string | null
   ) {
-    this.commands = []
+    this.helpHandler = new HelpEmulator(this.name)
 
     this.app.event("app_mention", async ({ event, say, context }) => {
       let text = event.text.replaceAll(`<@${this.botUserId}>`, `@${this.name}`)
@@ -111,7 +112,7 @@ export class BoltHubotEmulator {
   }
 
   helpCommands() {
-    return this.commands.sort()
+    return this.helpHandler.helpCommands()
   }
 
   respond(regex: RegExp, callback: (msg: Hubot.Response) => void) {
@@ -161,7 +162,7 @@ export class BoltHubotEmulator {
         const script = require(filePath)
         script(this)
 
-        this.parseHelp(filePath)
+        this.helpHandler.parseHelp(filePath)
       }
     })
   }
@@ -169,97 +170,4 @@ export class BoltHubotEmulator {
   receiveMiddleware(m: Middleware) {
     this.receiveMiddlewareHandler.register(m)
   }
-
-  // airlifted the code from the Hubot project:
-  // https://github.com/hubotio/hubot/blob/5f21da90a01295967cc555f5e23314be4c755f35/src/robot.js#L535-L583
-  private parseHelp(path: string) {
-    function toHeaderCommentBlock(block, currentLine) {
-      if (!block.isHeader) {
-        return block
-      }
-
-      if (isCommentLine(currentLine)) {
-        block.lines.push(removeCommentPrefix(currentLine))
-      } else {
-        block.isHeader = false
-      }
-
-      return block
-    }
-    function isCommentLine(line) {
-      return /^(#|\/\/)/.test(line)
-    }
-
-    function removeCommentPrefix(line) {
-      return line.replace(/^[#/]+\s*/, "")
-    }
-
-    const HUBOT_DOCUMENTATION_SECTIONS = [
-      "description",
-      "dependencies",
-      "configuration",
-      "commands",
-      "notes",
-      "author",
-      "authors",
-      "examples",
-      "tags",
-      "urls"
-    ]
-
-    const scriptDocumentation = {
-      commands: []
-    }
-    const body = fs.readFileSync(require.resolve(path), "utf-8")
-
-    const useStrictHeaderRegex = /^["']use strict['"];?\s+/
-    const lines = body
-      .replace(useStrictHeaderRegex, "")
-      .split(/(?:\n|\r\n|\r)/)
-      .reduce(toHeaderCommentBlock, { lines: [], isHeader: true })
-      .lines.filter(Boolean) // remove empty lines
-    let currentSection = null
-    let nextSection
-
-    for (let i = 0, line; i < lines.length; i++) {
-      line = lines[i]
-
-      if (line.toLowerCase() === "none") {
-        continue
-      }
-
-      nextSection = line.toLowerCase().replace(":", "")
-      if (Array.from(HUBOT_DOCUMENTATION_SECTIONS).indexOf(nextSection) !== -1) {
-        currentSection = nextSection
-        scriptDocumentation[currentSection] = []
-      } else {
-        if (currentSection) {
-          scriptDocumentation[currentSection].push(line)
-          if (currentSection === "commands") {
-            this.commands.push(line)
-          }
-        }
-      }
-    }
-
-    if (currentSection === null) {
-      scriptDocumentation.commands = []
-      for (let i = 0, line, cleanedLine; i < lines.length; i++) {
-        line = lines[i]
-        if (line.match("-")) {
-          continue
-        }
-
-        cleanedLine = line
-          .slice(2, +line.length + 1 || 9e9)
-          .replace(/^hubot/i, this.name)
-          .trim()
-        scriptDocumentation.commands.push(cleanedLine)
-        this.commands.push(cleanedLine)
-      }
-    }
-  }
 }
-
-
-

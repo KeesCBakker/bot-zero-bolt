@@ -12,7 +12,8 @@
 				"mikestead.dotenv",
 				"herrmannplatz.npm-dependency-links",
 				"wayou.vscode-todo-highlight",
-				"nsoult.typescript-imports-sort"
+				"nsoult.typescript-imports-sort",
+				"miclo.sort-typescript-imports"
 			]
 		}
 	},
