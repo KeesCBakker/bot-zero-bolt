@@ -4,7 +4,7 @@ export function validateConfg() {
   validateToken("SLACK_BOT_TOKEN", "xoxb-")
   validateToken("SLACK_APP_TOKEN", "xapp-")
 }
-
+ 
 function validateToken(name: string, format: "xoxb-" | "xapp-") {
   const envMsg =
     "your environment variables (for production) or to your .env file (for local development). You can find your Slack apps here: https://api.slack.com/apps"

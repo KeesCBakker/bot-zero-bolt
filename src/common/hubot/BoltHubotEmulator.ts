@@ -1,10 +1,11 @@
-import path from "path"
+import path, { resolve } from "path"
 import fs from "fs"
 import { StringIndexed } from "@slack/bolt/dist/types/helpers"
 import { App, SayFn } from "@slack/bolt"
 import Hubot from "hubot"
 import { ProfileService } from "../slack/ProfileService"
 import { escapeRegExp } from "hubot-command-mapper/dist/utils/regex"
+import { MiddlewareEmulator, Middleware } from "./MiddlewareEmulator"
 
 type InternalMessage = Hubot.Message & {
   isDirect: boolean
@@ -20,12 +21,15 @@ function makeObsoleteFn(name: string) {
   }
 }
 
+/* Emulates some of the features of Hubot, just to make it work
+   with the Hubot Command Mapper package */
 export class BoltHubotEmulator {
   private responses: {
     regex: RegExp
     callback: (msg: Hubot.Response) => void
   }[] = []
-  commands: any[]
+  private commands: any[]
+  private receiveMiddlewareHandler = new MiddlewareEmulator()
 
   constructor(
     public readonly name: string,
@@ -50,7 +54,7 @@ export class BoltHubotEmulator {
         isDirect: false
       }
 
-      this.invokeCallback(msg, say)
+      await this.invokeCallback(msg, say)
     })
 
     this.app.message(async ({ message, say }) => {
@@ -101,7 +105,7 @@ export class BoltHubotEmulator {
           isDirect
         }
 
-        this.invokeCallback(im, say)
+        await this.invokeCallback(im, say)
       }
     })
   }
@@ -116,11 +120,8 @@ export class BoltHubotEmulator {
     this.responses.push({ regex, callback })
   }
 
-  private invokeCallback(msg: InternalMessage, say: SayFn) {
-    let match = this.responses.find(x => x.regex.test(msg.text))
-    if (!match) return
-
-    var item: Hubot.Response = {
+  private async invokeCallback(msg: InternalMessage, say: SayFn) {
+    var response: Hubot.Response = {
       message: msg,
       reply: (str: string) => {
         if (msg.isDirect) {
@@ -135,13 +136,19 @@ export class BoltHubotEmulator {
       play: makeObsoleteFn("response.play"),
       locked: makeObsoleteFn("response.locked"),
       random: makeObsoleteFn("response.random"),
-      finish: makeObsoleteFn("response.finsih"),
-      match: match.regex.exec(msg.text),
-      envelope: null,
+      finish: makeObsoleteFn("response.finish"),
+      match: <any>null,
+      envelope: <any>null,
       http: makeObsoleteFn("response.http")
     }
 
-    match.callback(<any>item)
+    await this.receiveMiddlewareHandler.execute(response)
+
+    let match = this.responses.find(x => x.regex.test(msg.text))
+    if (!match) return
+
+    response.match = <any>msg.text?.match(match.regex)
+    match.callback(<any>response)
   }
 
   scan(scriptsDir: string) {
@@ -157,6 +164,10 @@ export class BoltHubotEmulator {
         this.parseHelp(filePath)
       }
     })
+  }
+
+  receiveMiddleware(m: Middleware) {
+    this.receiveMiddlewareHandler.register(m)
   }
 
   // airlifted the code from the Hubot project:
@@ -249,3 +260,6 @@ export class BoltHubotEmulator {
     }
   }
 }
+
+
+

@@ -35,7 +35,6 @@ export async function start() {
   }
 
   let robot = new BoltHubotEmulator(info.botName, info.botUserId, app, profiles, alias)
-
   robot.scan(scriptsDir)
 
   return {
@@ -53,9 +52,9 @@ async function getBotInfo(client: WebClient) {
 
   return {
     botId: auth.bot_id,
-    botUserId: info.bot.user_id,
+    botUserId: info.bot?.user_id,
     botName: auth.user,
-    appId: info.bot.app_id,
-    appUrl: "https://api.slack.com/apps/" + info.bot.app_id
+    appId: info.bot?.app_id,
+    appUrl: "https://api.slack.com/apps/" + info.bot?.app_id
   }
 }

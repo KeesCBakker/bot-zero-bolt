@@ -4,7 +4,8 @@
   "description": "A friendly Slack bot that works with both Bolt and the Hubot Command Mapper",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "start": "ts-node src/index.ts",
+    "dev": "ts-node-dev --respawn --poll --interval 1000 --transpile-only src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -24,10 +25,13 @@
     "chalk-with-markers": "^1.0.24",
     "dotenv": "^16.3.1",
     "hubot-command-mapper": "^4.0.5",
+    "node-fetch": "^2.6.12",
+    "remove-markdown": "^0.5.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.1.6"
   },
   "devDependencies": {
+    "@types/node-fetch": "^2.6.4",
     "ts-node-dev": "^2.0.0"
   }
 }
