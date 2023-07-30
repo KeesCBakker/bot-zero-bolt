@@ -1,7 +1,7 @@
 import { App, LogLevel, SocketModeReceiver } from "@slack/bolt"
 import { WebClient } from "@slack/web-api"
 import { BoltHubotEmulator } from "./hubot/BoltHubotEmulator"
-import { ProfileService } from "./slack/ProfileService"
+import { ProfileService } from "./ProfileService"
 import path from "path"
 
 // The directory containing the ex-hubot-scripts

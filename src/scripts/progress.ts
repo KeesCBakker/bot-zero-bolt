@@ -8,7 +8,7 @@
 //  KeesCBakker (kbakker@wehkamp.nl)
 
 import { map_command } from "hubot-command-mapper"
-import { createUpdatableMessage, delay } from "../common/slack/UpdatableMessage"
+import { createUpdatableMessage, delay } from "../common/UpdatableMessage"
 
 const steps = [
   "Preparing environment PROD and DEV...",

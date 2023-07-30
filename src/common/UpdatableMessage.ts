@@ -1,8 +1,46 @@
-import { ChatPostMessageArguments, ChatUpdateArguments, WebClient } from "@slack/web-api"
+import { ChatPostMessageArguments, ChatUpdateArguments, WebClient,  Block, KnownBlock, WebAPICallResult } from "@slack/web-api"
 import { IContext } from "hubot-command-mapper"
 import removeMarkDown from "remove-markdown"
-import { ChatPostMessageWebAPICallResult, ChatUpdateMessageWebAPICallResult, Message } from "../types"
-import { createWebClient } from "."
+import { createWebClient } from "./slack"
+
+type ChatPostMessageWebAPICallResult = WebAPICallResult & {
+  channel: string
+  ts: string
+  message: {
+    test: string
+    username: string
+    bot_id?: string
+    attachments: [
+      {
+        text: string
+        id: number
+        fallback: string
+      }
+    ]
+    type: string
+    subtype: string
+    ts: string
+  }
+}
+
+type ChatUpdateMessageWebAPICallResult = WebAPICallResult & {
+  channel: string
+  ts: string
+  text: string
+}
+
+type BlockMessage = {
+  text?: string
+  blocks?: (KnownBlock | Block)[]
+}
+
+type Message = BlockMessage | ChatPostMessageArguments | ChatUpdateArguments | string
+
+type ChannelWebAPICallResult = WebAPICallResult & {
+  channel: {
+    name: string
+  }
+}
 
 async function sendMessage(webClient: WebClient, msg: ChatPostMessageArguments | ChatUpdateArguments) {
   if (msg.ts) {

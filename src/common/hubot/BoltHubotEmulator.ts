@@ -3,7 +3,7 @@ import fs from "fs"
 import { StringIndexed } from "@slack/bolt/dist/types/helpers"
 import { App, SayFn } from "@slack/bolt"
 import Hubot from "hubot"
-import { ProfileService } from "../slack/ProfileService"
+import { ProfileService } from "../ProfileService"
 import { escapeRegExp } from "hubot-command-mapper/dist/utils/regex"
 import { MiddlewareEmulator, Middleware } from "./MiddlewareEmulator"
 
